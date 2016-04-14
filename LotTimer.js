@@ -4,12 +4,23 @@
  * @constructor
  * @dependencies {jQuery}
  * @param options {Object} - настройки
+ * @param options.syncUrl {String} - URL для обновления серверного времени
+ * @param options.syncLotsUrl {String} - URL для обновления данных лотов
+ * @param options.durationMode {String} - настройка в значении 'ProlongationByLots' не дает загружать данне лотов
  */
 function LotTimer (options) {
 
     this._syncUrl = options.syncUrl;
-    this._durationMode = options._durationMode;
+    this._syncLotsUrl = options.syncLotsUrl;
+    this._durationMode = options.durationMode;
+    this.__intervalTimeOfSyncServerTime = options.syncInterval;
 
+    this.syncServerTime();
+    this.startRecursiveSyncServerTime();
+
+    if (this._durationMode == 'ProlongationByLots') {
+        this.setDisabledTimer();
+    }
 }
 
 LotTimer.prototype = {
@@ -39,6 +50,11 @@ LotTimer.prototype = {
     _durationMode: null,
 
     /**
+     * Хэш хранения данных о лотах в формате: {lotId: lotRemainderTime};
+     */
+    dataOfLots: {},
+
+    /**
      * Возаращает URL со случайным параметром, чтобы не кешировать
      * ответ от сервера, даже если он не поддерживает ETag
      * @param url {String} - URL запроса
@@ -46,6 +62,25 @@ LotTimer.prototype = {
      */
     _getURLWithCMD: function (url) {
         return url + '?' + Date.now();
+    },
+
+    /**
+     * Запустить переодическое обновление верверного времени
+     */
+    startRecursiveSyncServerTime: function () {
+        this.__timerServerTime = setTimeout(function () {
+                this.getServerTime();
+                this.startRecursiveSyncServerTime();
+            }.bind(this),
+            this.__intervalTimeOfSyncServerTime
+        );
+    },
+
+    /**
+     * Остановить переодическое побновление серверного времени
+     */
+    stopRecursiveSyncServerTime: function () {
+        clearTimeout(this.__timerServerTime);
     },
 
     /**
@@ -105,8 +140,64 @@ LotTimer.prototype = {
         this.signalServerTimeUpdated();
 
         if (this._durationMode === 'ProlongationByLots') {
-            this.getLotsServerTime();
+            this.getLotsData();
         }
+    },
+
+    /**
+     * Получение данных лотов
+     */
+    getLotsData: function () {
+        $.get(this._getURLWithCMD(this._syncLotsUrl), function (response) {
+            this.setLastUpdateLotTime(this.getPresentTime());
+
+            if (response && response.lotsEndTime) {
+                this.resolveLotsTime(response.lotsEndTime);
+            }
+        }.bind(this));
+    },
+
+    /**
+     * Сохранить время последнего обновления времени лотов
+     */
+    setLastUpdateLotTime: function (time) {
+        this._lastUpdateLotTime = time;
+    },
+
+    /**
+     * Обновление данных времени лотов
+     * @param data
+     */
+    resolveLotsTime: function (data) {
+        var i = 0,
+            len = data.length,
+            lot, lotRemainderTime;
+
+        for (; i < len; i++) {
+            lot = data[i];
+            lotRemainderTime = lot.endTime;
+
+            this.setLotReminderTime(lot.lotId, lotRemainderTime);
+        }
+    },
+
+    /**
+     * Сохранить оставшееся время в хэш лотов
+     * Так же вызывает сигналы об обновлении лота
+     * @param lotId
+     * @param lotRemainderTime
+     */
+    setLotReminderTime: function (lotId, lotRemainderTime) {
+
+        this.dataOfLots[lotId] = lotRemainderTime;
+
+        if (this._isTimeOver(lotRemainderTime)) {
+            this.signalLotIsClose(lotId, lotRemainderTime);
+        } else {
+            this.signalLotIsOpen(lotId, lotRemainderTime);
+        }
+
+        this.signalLotUpdate(lotId, lotRemainderTime);
     },
 
     /**
@@ -118,9 +209,9 @@ LotTimer.prototype = {
     _isTimeOver: function (remainingTime) {
         var _remainingTime = remainingTime || this._remainderTime;
 
-        return _remainingTime.Hours == 0
-            && _remainingTime.Minutes == 0
-            && _remainingTime.Seconds == 0;
+        return _remainingTime.Hours <= 0
+            && _remainingTime.Minutes <= 0
+            && _remainingTime.Seconds <= 0;
     },
 
     /**
@@ -137,6 +228,7 @@ LotTimer.prototype = {
 
     /**
      * Сигнал о завершении оновления серверного времени
+     * @override
      */
     signalServerTimeUpdated: function () {
         //this.showServerTime();
@@ -144,9 +236,34 @@ LotTimer.prototype = {
     },
 
     /**
-     * Получение данных лотов
+     * Сигнал о закрытии лота
+     * @param lotId {Number|String} - идентификатор лота
+     * @param lotRemainderTime {timestamp} остаток времени по лоту
+     * @override
      */
-    getLotsData: function () {},
+    signalLotIsClose: function (lotId, lotRemainderTime) {
+
+    },
+
+    /**
+     * Сигнал об открытом лоте
+     * @param lotId {Number|String} - идентификатор лота
+     * @param lotRemainderTime {timestamp} остаток времени по лоту
+     * @override
+     */
+    signalLotIsOpen: function (lotId, lotRemainderTime) {
+
+    },
+
+    /**
+     * Сигнал об обновлении лота
+     * @param lotId {Number|String} - идентификатор лота
+     * @param lotRemainderTime {timestamp} остаток времени по лоту
+     * @override
+     */
+    signalLotUpdate: function (lotId, lotRemainderTime) {
+
+    },
 
     /**
      * Получение оставшегося времени
