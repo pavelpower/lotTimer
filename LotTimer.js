@@ -17,10 +17,6 @@ function LotTimer (options) {
 
     this.syncServerTime();
     this.startRecursiveSyncServerTime();
-
-    if (this._durationMode == 'ProlongationByLots') {
-        this.setDisabledTimer();
-    }
 }
 
 LotTimer.prototype = {
@@ -65,11 +61,11 @@ LotTimer.prototype = {
     },
 
     /**
-     * Запустить переодическое обновление верверного времени
+     * Запустить переодическое обновление серверного времени
      */
     startRecursiveSyncServerTime: function () {
         this.__timerServerTime = setTimeout(function () {
-                this.getServerTime();
+                this.syncServerTime();
                 this.startRecursiveSyncServerTime();
             }.bind(this),
             this.__intervalTimeOfSyncServerTime
@@ -89,8 +85,8 @@ LotTimer.prototype = {
     syncServerTime: function () {
         var startSyncTime = this.getPresentTime();
 
-        $.get(this._getURLWithCMD(this._syncUrl)
-            .done(this._parseResponseServerTime.bind(this, startSyncTime)))
+        $.get(this._getURLWithCMD(this._syncUrl))
+            .done(this._parseResponseServerTime.bind(this, startSyncTime))
             .fail(this.signalServerResponseFail.bind(this));
     },
 
@@ -201,6 +197,22 @@ LotTimer.prototype = {
     },
 
     /**
+     * Обновление времени для всех лотов в хеше
+     */
+    updateLotsRemaindersTimes: function () {
+        var lotId, lotRemainderTime;
+
+        for (lotId in this.dataOfLots) {
+
+            lotRemainderTime = this.dataOfLots[lotId];
+
+            lotRemainderTime = this.getRemainderTime(this.__timerServerTime, lotRemainderTime);
+
+            this.setLotReminderTime(lotId, lotRemainderTime);
+        }
+    },
+
+    /**
      * Проверка завершены ли торги или нет?
      * @param remainingTime {timestamp}
      * @private
@@ -266,14 +278,15 @@ LotTimer.prototype = {
     },
 
     /**
-     * Получение оставшегося времени
+     * Изменение оставшегося времени отсносительно времени отсчета (старта)
+     * (Вычитание)
      * @param timeFrom {timestamp} - от какого времени вести отчет
+     * @param remainderTime {timestamp} - время к которому нужно прибавить количествопройденных секунд
      * @return {timestamp} - время сколько осталось
      */
-    getRemainderTime: function (timeFrom) {
+    getRemainderTime: function (timeFrom, remainderTime) {
         var start, diffTime, diffSec;
 
-        // время последнего запроса лотов
         start = timeFrom;
 
         // сколько прошло времени с последнего запроса лотов
@@ -284,7 +297,7 @@ LotTimer.prototype = {
 
         // расчет прошедших секунд со времени старта
         // вычитаем из времени старта, для получения времени оставшегося
-        return this.addSecondsTo(timeFrom, 0 - (diffSec + 1));
+        return this.addSecondsTo(remainderTime, 0 - (diffSec + 1));
     },
 
     /**
