@@ -102,7 +102,7 @@ LotTimer.prototype = {
             .fail(this.signalServerResponseFail.bind(this));
     },
 
-    _parseResponseServerTime: function (response, startSyncTime) {
+    _parseResponseServerTime: function (startSyncTime, response) {
         var timeSpentOnRequest;
 
         if ($.type(response) !== 'object' || !response.endTimeSpan) {
@@ -123,15 +123,16 @@ LotTimer.prototype = {
             return;
         }
 
-        this.setServerTime(response.dateTime);
+        this.setServerTime(response.dateTime, timeSpentOnRequest);
 
     },
 
     /**
      * Сохранить серверное время
      * @param dataTime {Date}
+     * @param timeSpentOnRequest {timestamp}
      */
-    setServerTime: function (dataTime) {
+    setServerTime: function (dataTime, timeSpentOnRequest) {
 
         if (dataTime) {
             this._serverTime = new Date(
@@ -141,7 +142,7 @@ LotTimer.prototype = {
                 dataTime.Hour,
                 dataTime.Minute,
                 dataTime.Second,
-                dataTime.Millisecond + diffGetDate
+                dataTime.Millisecond + timeSpentOnRequest
             );
         }
 
@@ -370,5 +371,62 @@ LotTimer.prototype = {
         timeSpan.Minutes = m;
         timeSpan.Seconds = ts;
         return timeSpan;
+    }
+};
+
+
+/**
+ * Кнотроллер Виджета серверного времени
+ * @constructor
+ */
+function SeverClock () {
+
+}
+
+SeverClock.prototype = {
+
+    defaults: {
+        mode: 'member',
+        syncUrl: window.realEndTimeSyncUrl + '/' + window.auctionId,
+        syncLotsUrl: window.realLotEndTimeSyncUrl + '/' + window.auctionId,
+        durationMode: window.durationMode ? window.durationMode : 'none',
+        syncInterval: 60000,
+        processLotsSelector: "#lots-table tr[id]:not(.lot-disable)",
+        serverTimeSelector: "#server-clock",
+        remainingTimeSelector: "#auction-end-clock, .auction-end-clock ",
+        remainingTimeLotSelector: '#lot-end-clock-',
+        lotStatusSelector: '#lot-status-',
+        lotStatusActiveText: 'Аукцион по позиции продолжается',
+        lotStatusStopText: 'Аукцион по позиции завершен'
+    },
+
+    init: function () {
+
+        Date.now = Date.now || function () { return +new Date; };
+        window.sc = this;
+        options = options || {};
+        this.options = $.extend(this.defaults, options);
+
+        if (this.options.mode == "org") {
+            $('#bootstrap_alert').appendAlert(this.options.message + '<span class="auction-end-clock"></span>)', 'warning');
+        }
+        this.$serverTimeElement = $(this.options.serverTimeSelector);
+        this.$remainingTimeElement = $(this.options.remainingTimeSelector);
+
+
+        this.lotTimer = new LotTimer(this.options);
+
+        this.lotTimer.signalLotIsClose = function (lotId, lotRemainderTime) {
+
+        };
+
+        this.lotTimer.signalLotIsOpen = function (lotId, lotRemainderTime) {
+
+        };
+
+    },
+
+    getServerTime: function () {
+        this.lotTimer.syncServerTime();
     }
 };
