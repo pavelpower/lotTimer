@@ -162,6 +162,10 @@ LotTimer.prototype = {
             if (response && response.lotsEndTime) {
                 this.resolveLotsTime(response.lotsEndTime);
             }
+
+            this.stopTimerUpdateLotsRemaindersTime();
+            this.startTimerUpdateLotsRemaindersTime();
+
         }.bind(this));
     },
 
@@ -215,6 +219,10 @@ LotTimer.prototype = {
      */
     updateLotsRemaindersTime: function () {
         var lotId, lotRemainderTime;
+
+        if (this.dataOfLots == null) {
+            return;
+        }
 
         for (lotId in this.dataOfLots) {
 
