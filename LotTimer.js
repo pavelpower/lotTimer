@@ -13,7 +13,9 @@ function LotTimer (options) {
     this._syncUrl = options.syncUrl;
     this._syncLotsUrl = options.syncLotsUrl;
     this._durationMode = options.durationMode;
-    this.__intervalTimeOfSyncServerTime = options.syncInterval;
+    this._intervalTimeOfSyncServerTime = options.syncInterval;
+    this._intervalTimeOfUpdateLotsRemaindersTimers = 1000;
+
 
     this.syncServerTime();
     this.startRecursiveSyncServerTime();
@@ -46,6 +48,16 @@ LotTimer.prototype = {
     _durationMode: null,
 
     /**
+     * Идентификатор таймера синхронизации данных серверного времени
+     */
+    __timerServerTime: null,
+
+    /**
+     * Таймер обновления времени всех лотов
+     */
+    __timerOfUpdateLotsRemainderTime: null,
+
+    /**
      * Хэш хранения данных о лотах в формате: {lotId: lotRemainderTime};
      */
     dataOfLots: {},
@@ -68,7 +80,7 @@ LotTimer.prototype = {
                 this.syncServerTime();
                 this.startRecursiveSyncServerTime();
             }.bind(this),
-            this.__intervalTimeOfSyncServerTime
+            this._intervalTimeOfSyncServerTime
         );
     },
 
@@ -180,8 +192,8 @@ LotTimer.prototype = {
     /**
      * Сохранить оставшееся время в хэш лотов
      * Так же вызывает сигналы об обновлении лота
-     * @param lotId
-     * @param lotRemainderTime
+     * @param lotId {Number|String} - идентификатор лота
+     * @param lotRemainderTime - остаток времени
      */
     setLotReminderTime: function (lotId, lotRemainderTime) {
 
@@ -198,18 +210,38 @@ LotTimer.prototype = {
 
     /**
      * Обновление времени для всех лотов в хеше
+     * путем вычисления времени прошедшего с момента последнего обноавления с сервера,
+     * до текущего момента
      */
-    updateLotsRemaindersTimes: function () {
+    updateLotsRemaindersTime: function () {
         var lotId, lotRemainderTime;
 
         for (lotId in this.dataOfLots) {
 
+            if (!this.dataOfLots.hasOwnProperty(lotId)) {
+                continue;
+            }
+
             lotRemainderTime = this.dataOfLots[lotId];
 
-            lotRemainderTime = this.getRemainderTime(this.__timerServerTime, lotRemainderTime);
+            // отсчет добавления секунд ведеться от последнего обновления лотов
+            lotRemainderTime = this.getRemainderTime(this._lastUpdateLotTime, lotRemainderTime);
 
             this.setLotReminderTime(lotId, lotRemainderTime);
         }
+    },
+
+    startTimerUpdateLotsRemaindersTime: function () {
+        this.__timerOfUpdateLotsRemainderTime = setTimeout(function () {
+                this.updateLotsRemaindersTime();
+                this.startTimerUpdateLotsRemaindersTime();
+            }.bind(this),
+            this._intervalTimeOfUpdateLotsRemaindersTimers
+        );
+    },
+
+    stopTimerUpdateLotsRemaindersTime: function () {
+        clearTimeout(this.__timerOfUpdateLotsRemainderTime);
     },
 
     /**
