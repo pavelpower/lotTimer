@@ -379,15 +379,9 @@ LotTimer.prototype = {
  * Кнотроллер Виджета серверного времени
  * @constructor
  */
-function SeverClock (options) {
+function ServerClock (options) {
 
-    options = options || {};
-    this.options = $.extend(this.defaults, options);
-}
-
-SeverClock.prototype = {
-
-    defaults: {
+    this.defaults = {
         mode: 'member',
         syncUrl: window.realEndTimeSyncUrl + '/' + window.auctionId,
         syncLotsUrl: window.realLotEndTimeSyncUrl + '/' + window.auctionId,
@@ -400,7 +394,13 @@ SeverClock.prototype = {
         lotStatusSelector: '#lot-status-',
         lotStatusActiveText: 'Аукцион по позиции продолжается',
         lotStatusStopText: 'Аукцион по позиции завершен'
-    },
+    };
+
+    options = options || {};
+    this.options = $.extend(this.defaults, options);
+}
+
+ServerClock.prototype = {
 
     init: function () {
 
