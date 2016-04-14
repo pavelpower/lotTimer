@@ -379,8 +379,10 @@ LotTimer.prototype = {
  * Кнотроллер Виджета серверного времени
  * @constructor
  */
-function SeverClock () {
+function SeverClock (options) {
 
+    options = options || {};
+    this.options = $.extend(this.defaults, options);
 }
 
 SeverClock.prototype = {
@@ -402,17 +404,12 @@ SeverClock.prototype = {
 
     init: function () {
 
-        Date.now = Date.now || function () { return +new Date; };
-        window.sc = this;
-        options = options || {};
-        this.options = $.extend(this.defaults, options);
-
         if (this.options.mode == "org") {
             $('#bootstrap_alert').appendAlert(this.options.message + '<span class="auction-end-clock"></span>)', 'warning');
         }
+
         this.$serverTimeElement = $(this.options.serverTimeSelector);
         this.$remainingTimeElement = $(this.options.remainingTimeSelector);
-
 
         this.lotTimer = new LotTimer(this.options);
 
@@ -423,7 +420,6 @@ SeverClock.prototype = {
         this.lotTimer.signalLotIsOpen = function (lotId, lotRemainderTime) {
 
         };
-
     },
 
     getServerTime: function () {
