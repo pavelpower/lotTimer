@@ -73,7 +73,7 @@ LotTimer.prototype = {
 
         // Вычисляеться еоличество прошедщих секунд по вычелсенному времени потраченному на запрос
         // и добавляеться к серверному времени
-        this._remainderTime = addSeconds(response.endTimeSpan, Math.round(timeSpentOnRequest / 1000));
+        this._remainderTime = this.addSecondsTo(response.endTimeSpan, Math.round(timeSpentOnRequest / 1000));
 
         if (this._isTimeOver()) {
             this.signalTimeIsOver();
@@ -142,7 +142,6 @@ LotTimer.prototype = {
         //this.showServerTime();
         //this.showRemainingTime();
     },
-
 
     /**
      * Получение данных лотов
