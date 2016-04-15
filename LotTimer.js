@@ -424,7 +424,7 @@ ServerClock.prototype = {
         };
 
         this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots) {
-            var lotId, i, lotRemainderTime, lot;
+            var len, i = 0, lotRemainderTime, lot;
             var timeText = getClockString(
                 remainingTime.Hours,
                 remainingTime.Minutes,
@@ -436,9 +436,9 @@ ServerClock.prototype = {
 
             if (dataLots) {
 
-                i = dataLots.length;
+                len = dataLots.length;
 
-                for (; i >= 0; i--) {
+                for (; i < len; i++) {
 
                     lot = dataLots[i];
                     //lotRemainderTime = lot.endTime;
