@@ -253,7 +253,7 @@ LotTimer.prototype = {
             var diff, cnt;
 
             if (this._serverTime) {
-                diff = this.getPresentTime() - this.__lastTimestampServerTimeLoad - timeout;
+                diff = this.getPresentTime() - start - timeout;
                 cnt = Math.floor(diff / timeout);
 
                 this._serverTime.setSeconds(this._serverTime.getSeconds() + cnt + 1);
