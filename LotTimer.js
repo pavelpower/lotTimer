@@ -431,6 +431,11 @@ ServerClock.prototype = {
             var lotId, lotRemainderTime, $el, span;
 
             for (lotId in dataLots) {
+
+                if (!dataLots.hasOwnProperty(lotId)) {
+                    continue;
+                }
+
                 lotRemainderTime = dataLots[lotId];
 
                 $el = $(options.remainingTimeLotSelector + lotId);
