@@ -197,16 +197,7 @@ LotTimer.prototype = {
      * @param lotRemainderTime - остаток времени
      */
     setLotReminderTime: function (lotId, lotRemainderTime) {
-
         this.dataOfLots[lotId] = lotRemainderTime;
-
-        if (this._isTimeOver(lotRemainderTime)) {
-            this.signalLotIsClose(lotId, lotRemainderTime);
-        } else {
-            this.signalLotIsOpen(lotId, lotRemainderTime);
-        }
-
-        this.signalLotUpdate(lotId, lotRemainderTime);
     },
 
     /**
@@ -214,9 +205,8 @@ LotTimer.prototype = {
      * путем вычисления времени прошедшего с момента последнего обноавления с сервера,
      * до текущего момента
      */
-    updateLotsRemaindersTime: function () {
-        var lotId, lotRemainderTime,
-            timeout, diff, cnt;
+    updateLotsRemaindersTime: function (cnt) {
+        var lotId, lotRemainderTime;
 
         if (this.dataOfLots == null) {
             return;
@@ -230,17 +220,14 @@ LotTimer.prototype = {
 
             lotRemainderTime = this.dataOfLots[lotId];
 
-            timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
-            diff = this.getPresentTime() - this.__lastTimestampLoadDataLots - timeout;
-            cnt = Math.floor(diff / timeout);
-
             // отсчет добавления секунд ведеться от последнего обновления лотов
             // возможный косяк
             lotRemainderTime = this.addSecondsTo(lotRemainderTime, 0 - (cnt + 1));
 
-
             this.setLotReminderTime(lotId, lotRemainderTime);
         }
+
+        this.signalLotsUpdated(this.dataOfLots);
     },
 
     startTimerUpdateLotsRemaindersTime: function () {
@@ -260,15 +247,15 @@ LotTimer.prototype = {
                 this.signalServerTimeUpdated(this._serverTime);
             }
 
-            if (this._remainingTime) {
-                this.updateRemainingTime(this.addSecondsTo(this._remainingTime, 0 - (cnt + 1)));
+            if (this._remainderTime) {
+                this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)));
 
                 if (this._isTimeOver()) {
                     this.syncServerTime();
                 }
             }
 
-            this.updateLotsRemaindersTime();
+            this.updateLotsRemaindersTime(cnt);
 
             diff = diff - timeout * cnt;
             start = this.getPresentTime() - diff;
@@ -283,8 +270,8 @@ LotTimer.prototype = {
     },
 
     updateRemainingTime: function (remainingTime) {
-        this._remainingTime = remainingTime;
-        this.signalRemainingTimeUpdate(this._remainingTime);
+        this._remainderTime = remainingTime;
+        this.signalRemainingTimeUpdate(this._remainderTime);
     },
 
     stopTimerUpdateLotsRemaindersTime: function () {
@@ -363,6 +350,14 @@ LotTimer.prototype = {
      * @override
      */
     signalLotUpdate: function (lotId, lotRemainderTime) {
+
+    },
+
+    /**
+     * Завершено обновление времени лотов
+     * @param hashLotsTime
+     */
+    signalLotsUpdated: function (hashLotsTime) {
 
     },
 
@@ -461,6 +456,29 @@ ServerClock.prototype = {
         this.$remainingTimeElement = $(this.options.remainingTimeSelector);
 
         this.lotTimer = new LotTimer(this.options);
+
+        this.lotTimer.signalLotsUpdated = function (dataLots) {
+            var lotId, lotRemainderTime, $el, span;
+
+            for (lotId in dataLots) {
+                lotRemainderTime = dataLots[lotId];
+
+                $el = $(options.remainingTimeLotSelector + lotId);
+
+                if (this._isTimeOver()) {
+                    // время вышло
+                    span = ['<span class="time-is-over">',
+                        getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds),
+                        '</span>'].join('');
+                } else {
+                    span = ['<span class="time-is-live">',
+                        getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds),
+                        '</span>'].join('');
+                }
+
+                $el.html(span);
+            }
+        };
 
         this.lotTimer.signalLotIsClose = function (lotId, lotRemainderTime) {
             $(options.remainingTimeLotSelector + lotId)
