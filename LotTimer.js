@@ -267,7 +267,7 @@ LotTimer.prototype = {
             diff = this.getPresentTime() - this._remainderTime - timeout;
             cnt = Math.floor(diff / timeout);
 
-            this._serverTime.setSeconds(this._serverTime.serverTime.getSeconds() + cnt + 1);
+            this._serverTime.setSeconds(this._serverTime.getSeconds() + cnt + 1);
             this.signalServerTimeUpdated(this._serverTime);
 
             this.updateLotsRemaindersTime();
