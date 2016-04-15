@@ -161,9 +161,9 @@ LotTimer.prototype = {
      */
     getLotsData: function () {
         $.get(this._getURLWithCMD(this._syncLotsUrl), function (response) {
-            this.__lastTimestampLoadDataLots = this.getPresentTime();
 
             if (response && response.lotsEndTime) {
+                this.__lastTimestampLoadDataLots = this.getPresentTime();
                 this.resolveLotsTime(response.lotsEndTime);
             }
 
