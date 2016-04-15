@@ -178,16 +178,7 @@ LotTimer.prototype = {
      * @param data
      */
     resolveLotsTime: function (data) {
-        var i = 0,
-            len = data.length,
-            lot, lotRemainderTime;
-
-        for (; i < len; i++) {
-            lot = data[i];
-            lotRemainderTime = lot.endTime;
-
-            this.setLotReminderTime(lot.lotId, lotRemainderTime);
-        }
+        this.dataOfLots = data;
     },
 
     /**
@@ -255,7 +246,7 @@ LotTimer.prototype = {
                 }
             }
 
-            this.updateLotsRemaindersTime(cnt);
+            //this.updateLotsRemaindersTime(cnt);
 
             diff = diff - timeout * cnt;
             start = this.getPresentTime() - diff;
@@ -271,7 +262,7 @@ LotTimer.prototype = {
 
     updateRemainingTime: function (remainingTime) {
         this._remainderTime = remainingTime;
-        this.signalRemainingTimeUpdate(this._remainderTime);
+        this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots);
     },
 
     stopTimerUpdateLotsRemaindersTime: function () {
@@ -319,7 +310,7 @@ LotTimer.prototype = {
      * @param remainingTime {Object} - остаточное время
      * @override
      */
-    signalRemainingTimeUpdate: function (remainingTime) {
+    signalRemainingTimeUpdate: function (remainingTime, dataLots) {
 
     },
 
@@ -427,46 +418,47 @@ ServerClock.prototype = {
 
         this.lotTimer = new LotTimer(this.options);
 
-        this.lotTimer.signalLotsUpdated = function (dataLots) {
-            var lotId, lotRemainderTime, $el, span;
-
-            for (lotId in dataLots) {
-
-                if (!dataLots.hasOwnProperty(lotId)) {
-                    continue;
-                }
-
-                lotRemainderTime = dataLots[lotId];
-
-                $el = $(options.remainingTimeLotSelector + lotId);
-
-                if (this._isTimeOver()) {
-                    // время вышло
-                    span = ['<span class="time-is-over">',
-                        getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds),
-                        '</span>'].join('');
-                } else {
-                    span = ['<span class="time-is-live">',
-                        getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds),
-                        '</span>'].join('');
-                }
-
-                $el.html(span);
-            }
-        };
-
         this.lotTimer.signalServerTimeUpdated = function (serverTime) {
             $(options.serverTimeSelector)
                 .text(getClockString(serverTime.getHours(), serverTime.getMinutes(), serverTime.getSeconds()));
         };
 
-        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime) {
+        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots) {
+            var lotId, i, lotRemainderTime, lot;
+            var timeText = getClockString(
+                remainingTime.Hours,
+                remainingTime.Minutes,
+                remainingTime.Seconds
+            );
+
             $(options.remainingTimeSelector)
-                .text(getClockString(
-                    remainingTime.Hours,
-                    remainingTime.Minutes,
-                    remainingTime.Seconds
-                ));
+                .text(timeText);
+
+            if (dataLots) {
+
+                i = dataLots.length;
+
+                for (; i >= 0; i--) {
+
+                    lot = dataLots[i];
+                    //lotRemainderTime = lot.endTime;
+
+                    $el = $(options.remainingTimeLotSelector + lot.lotId);
+
+                    if (this._isTimeOver()) {
+                        // время вышло
+                        span = ['<span class="time-is-over">',
+                            timeText,
+                            '</span>'].join('');
+                    } else {
+                        span = ['<span class="time-is-live">',
+                            timeText,
+                            '</span>'].join('');
+                    }
+
+                    $el.html(span);
+                }
+            }
         }
     },
 
