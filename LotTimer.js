@@ -115,6 +115,8 @@ LotTimer.prototype = {
         // делиться на два - это интересно почему, видимо из практики вычитано
         timeSpentOnRequest = Math.floor((this.getPresentTime() - startSyncTime) / 2);
 
+        this.__lastTimestampServerTimeLoad = this.getPresentTime();
+
         // Вычисляеться количество прошедщих секунд по вычелсенному времени потраченному на запрос
         // и добавляеться к серверному времени
         this._remainderTime = this.addSecondsTo(response.endTimeSpan, Math.round(timeSpentOnRequest / 1000));
@@ -159,7 +161,7 @@ LotTimer.prototype = {
      */
     getLotsData: function () {
         $.get(this._getURLWithCMD(this._syncLotsUrl), function (response) {
-            this.setLastUpdateLotTime(this.getPresentTime());
+            this.__lastTimestampLoadDataLots = this.getPresentTime();
 
             if (response && response.lotsEndTime) {
                 this.resolveLotsTime(response.lotsEndTime);
@@ -169,13 +171,6 @@ LotTimer.prototype = {
             this.startTimerUpdateLotsRemaindersTime();
 
         }.bind(this));
-    },
-
-    /**
-     * Сохранить время последнего обновления времени лотов
-     */
-    setLastUpdateLotTime: function (time) {
-        this._lastUpdateLotTime = time;
     },
 
     /**
@@ -236,7 +231,7 @@ LotTimer.prototype = {
             lotRemainderTime = this.dataOfLots[lotId];
 
             timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
-            diff = this.getPresentTime() - this._remainderTime - timeout;
+            diff = this.getPresentTime() - this.__lastTimestampLoadDataLots - timeout;
             cnt = Math.floor(diff / timeout);
 
             // отсчет добавления секунд ведеться от последнего обновления лотов
@@ -253,11 +248,11 @@ LotTimer.prototype = {
         function updateTime () {
             var timeout, diff, cnt;
 
-            timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
-            diff = this.getPresentTime() - this._remainderTime - timeout;
-            cnt = Math.floor(diff / timeout);
-
             if (this._serverTime) {
+                timeout = this.__lastTimestampServerTimeLoad;
+                diff = this.getPresentTime() - this._remainderTime - timeout;
+                cnt = Math.floor(diff / timeout);
+
                 this._serverTime.setSeconds(this._serverTime.getSeconds() + cnt + 1);
                 this.signalServerTimeUpdated(this._serverTime);
             }
