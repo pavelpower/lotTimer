@@ -324,36 +324,6 @@ LotTimer.prototype = {
     },
 
     /**
-     * Сигнал о закрытии лота
-     * @param lotId {Number|String} - идентификатор лота
-     * @param lotRemainderTime {timestamp} остаток времени по лоту
-     * @override
-     */
-    signalLotIsClose: function (lotId, lotRemainderTime) {
-
-    },
-
-    /**
-     * Сигнал об открытом лоте
-     * @param lotId {Number|String} - идентификатор лота
-     * @param lotRemainderTime {timestamp} остаток времени по лоту
-     * @override
-     */
-    signalLotIsOpen: function (lotId, lotRemainderTime) {
-
-    },
-
-    /**
-     * Сигнал об обновлении лота
-     * @param lotId {Number|String} - идентификатор лота
-     * @param lotRemainderTime {timestamp} остаток времени по лоту
-     * @override
-     */
-    signalLotUpdate: function (lotId, lotRemainderTime) {
-
-    },
-
-    /**
      * Завершено обновление времени лотов
      * @param hashLotsTime
      */
@@ -480,22 +450,12 @@ ServerClock.prototype = {
             }
         };
 
-        this.lotTimer.signalLotIsClose = function (lotId, lotRemainderTime) {
-            $(options.remainingTimeLotSelector + lotId)
-                .text(getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds));
-        };
-
-        this.lotTimer.signalLotIsOpen = function (lotId, lotRemainderTime) {
-            $(options.remainingTimeLotSelector + lotId)
-                .text(getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds));
-        };
-
         this.lotTimer.signalServerTimeUpdated = function (serverTime) {
             $(options.serverTimeSelector)
                 .text(getClockString(serverTime.getHours(), serverTime.getMinutes(), serverTime.getSeconds()));
         };
 
-        this.lotTime.signalRemainingTimeUpdate = function (remainingTime) {
+        this.lotTime.signalRemainingTimerUpdate = function (remainingTime) {
             $(options.remainingTimeLotSelector)
                 .text(getClockString(
                     remainingTime.Hours,
