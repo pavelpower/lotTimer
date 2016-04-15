@@ -252,10 +252,10 @@ LotTimer.prototype = {
         function updateTime () {
             var diff, cnt;
 
-            if (this._serverTime) {
-                diff = this.getPresentTime() - start - timeout;
-                cnt = Math.floor(diff / timeout);
+            diff = this.getPresentTime() - start - timeout;
+            cnt = Math.floor(diff / timeout);
 
+            if (this._serverTime) {
                 this._serverTime.setSeconds(this._serverTime.getSeconds() + cnt + 1);
                 this.signalServerTimeUpdated(this._serverTime);
             }
