@@ -155,16 +155,6 @@ LotTimer.prototype = {
     },
 
     /**
-     *
-     */
-    updateServerTime: function () {
-        var startServerTime = this._serverTime;
-        self.serverTime.setSeconds(this._serverTime.serverTime.getSeconds() + cnt + 1);
-
-        this.signalServerTimeUpdated(this._serverTime);
-    },
-
-    /**
      * Получение данных лотов
      */
     getLotsData: function () {
@@ -272,13 +262,13 @@ LotTimer.prototype = {
 
             this.updateLotsRemaindersTime();
 
-            updateTime.call(this);
+            this.__timerOfUpdateLotsRemainderTime = setTimeout(
+                updateTime.bind(this),
+                this._intervalTimeOfUpdateLotsRemaindersTimers
+            );
         }
 
-        this.__timerOfUpdateLotsRemainderTime = setTimeout(
-            updateTime.bind(this),
-            this._intervalTimeOfUpdateLotsRemaindersTimers
-        );
+        updateTime.call(this);
     },
 
     stopTimerUpdateLotsRemaindersTime: function () {
