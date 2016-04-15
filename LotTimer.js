@@ -8,7 +8,7 @@
  * @param options.syncLotsUrl {String} - URL для обновления данных лотов
  * @param options.durationMode {String} - настройка в значении 'ProlongationByLots' не дает загружать данне лотов
  */
-function LotTimer (options) {
+function LotTimer(options) {
 
     this._syncUrl = options.syncUrl;
     this._syncLotsUrl = options.syncLotsUrl;
@@ -19,6 +19,7 @@ function LotTimer (options) {
 
     this.syncServerTime();
     this.startRecursiveSyncServerTime();
+    this.startTimerUpdateLotsRemaindersTime();
 }
 
 LotTimer.prototype = {
@@ -40,7 +41,7 @@ LotTimer.prototype = {
      * А так же обновляется при выислении по таймеру
      * @type {timestamp}
      */
-     _remainderTime: null,
+    _remainderTime: null,
 
     /**
      * Если параметр выставлен в "ProlongationByLots" - проиходит обновление лотов
@@ -114,7 +115,7 @@ LotTimer.prototype = {
         // делиться на два - это интересно почему, видимо из практики вычитано
         timeSpentOnRequest = Math.floor((this.getPresentTime() - startSyncTime) / 2);
 
-        // Вычисляеться еоличество прошедщих секунд по вычелсенному времени потраченному на запрос
+        // Вычисляеться количество прошедщих секунд по вычелсенному времени потраченному на запрос
         // и добавляеться к серверному времени
         this._remainderTime = this.addSecondsTo(response.endTimeSpan, Math.round(timeSpentOnRequest / 1000));
 
@@ -144,13 +145,23 @@ LotTimer.prototype = {
                 dataTime.Second,
                 dataTime.Millisecond + timeSpentOnRequest
             );
-        }
 
-        this.signalServerTimeUpdated();
+            this.signalServerTimeUpdated(this._serverTime);
+        }
 
         if (this._durationMode === 'ProlongationByLots') {
             this.getLotsData();
         }
+    },
+
+    /**
+     *
+     */
+    updateServerTime: function () {
+        var startServerTime = this._serverTime;
+        self.serverTime.setSeconds(this._serverTime.serverTime.getSeconds() + cnt + 1);
+
+        this.signalServerTimeUpdated(this._serverTime);
     },
 
     /**
@@ -219,7 +230,8 @@ LotTimer.prototype = {
      * до текущего момента
      */
     updateLotsRemaindersTime: function () {
-        var lotId, lotRemainderTime;
+        var lotId, lotRemainderTime,
+            timeout, diff, cnt;
 
         if (this.dataOfLots == null) {
             return;
@@ -233,18 +245,38 @@ LotTimer.prototype = {
 
             lotRemainderTime = this.dataOfLots[lotId];
 
+            timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
+            diff = this.getTimestamp() - this._remainderTime - timeout;
+            cnt = Math.floor(diff / timeout);
+
             // отсчет добавления секунд ведеться от последнего обновления лотов
-            lotRemainderTime = this.getRemainderTime(this._lastUpdateLotTime, lotRemainderTime);
+            // возможный косяк
+            lotRemainderTime = this.addSecondsTo(lotRemainderTime, 0 - (cnt + 1));
+
 
             this.setLotReminderTime(lotId, lotRemainderTime);
         }
     },
 
     startTimerUpdateLotsRemaindersTime: function () {
-        this.__timerOfUpdateLotsRemainderTime = setTimeout(function () {
-                this.updateLotsRemaindersTime();
-                this.startTimerUpdateLotsRemaindersTime();
-            }.bind(this),
+
+        function updateTime () {
+            var timeout, diff, cnt;
+
+            timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
+            diff = this.getTimestamp() - this._remainderTime - timeout;
+            cnt = Math.floor(diff / timeout);
+
+            this._serverTime.setSeconds(this._serverTime.serverTime.getSeconds() + cnt + 1);
+            this.signalServerTimeUpdated(this._serverTime);
+
+            this.updateLotsRemaindersTime();
+
+            updateTime.call(this);
+        }
+
+        this.__timerOfUpdateLotsRemainderTime = setTimeout(
+            updateTime.bind(this),
             this._intervalTimeOfUpdateLotsRemaindersTimers
         );
     },
@@ -271,13 +303,13 @@ LotTimer.prototype = {
      * Сигнал о завершении торгов
      * @override
      */
-    signalTimeIsOver: function () {},
+    signalTimeIsOver: function () { },
 
     /**
      * Запрос к серверу для получения серверного времени обвалился или пришел неверный ответ
      * @override
      */
-    signalServerResponseFail: function () {},
+    signalServerResponseFail: function () { },
 
     /**
      * Сигнал о завершении оновления серверного времени
@@ -379,7 +411,7 @@ LotTimer.prototype = {
  * Кнотроллер Виджета серверного времени
  * @constructor
  */
-function ServerClock (options) {
+function ServerClock(options) {
 
     this.defaults = {
         mode: 'member',
@@ -403,6 +435,7 @@ function ServerClock (options) {
 ServerClock.prototype = {
 
     init: function () {
+        var options = this.options;
 
         if (this.options.mode == "org") {
             $('#bootstrap_alert').appendAlert(this.options.message + '<span class="auction-end-clock"></span>)', 'warning');
@@ -414,11 +447,19 @@ ServerClock.prototype = {
         this.lotTimer = new LotTimer(this.options);
 
         this.lotTimer.signalLotIsClose = function (lotId, lotRemainderTime) {
-
+            $(options.remainingTimeLotSelector + lotId)
+                .text(getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds));
         };
 
         this.lotTimer.signalLotIsOpen = function (lotId, lotRemainderTime) {
+            $(options.remainingTimeLotSelector + lotId)
+                .text(getClockString(lotRemainderTime.Hours, lotRemainderTime.Minutes, lotRemainderTime.Seconds));
+        };
 
+        this.lotTimer.signalServerTimeUpdated = function (serverTime) {
+            console.log("this.lotTimer.signalServerTimeUpdated", serverTime);
+            $(options.serverTimeSelector)
+                .text(getClockString(serverTime.getHours(), serverTime.getMinutes(), serverTime.getSeconds()));
         };
     },
 
@@ -426,3 +467,14 @@ ServerClock.prototype = {
         this.lotTimer.syncServerTime();
     }
 };
+
+function addZero(value) {
+    if (value >= 0 && value <= 9) return '0' + value;
+    return value;
+}
+function getSmallClockString(h, m) {
+    return addZero(h) + ':' + addZero(m);
+}
+function getClockString(h, m, s) {
+    return getSmallClockString(h, m) + ':' + addZero(s);
+}
