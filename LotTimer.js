@@ -249,8 +249,8 @@ LotTimer.prototype = {
             var timeout, diff, cnt;
 
             if (this._serverTime) {
-                timeout = this.__lastTimestampServerTimeLoad;
-                diff = this.getPresentTime() - this._remainderTime - timeout;
+                timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
+                diff = this.getPresentTime() - this.__lastTimestampServerTimeLoad - timeout;
                 cnt = Math.floor(diff / timeout);
 
                 this._serverTime.setSeconds(this._serverTime.getSeconds() + cnt + 1);
