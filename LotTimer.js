@@ -246,7 +246,7 @@ LotTimer.prototype = {
             lotRemainderTime = this.dataOfLots[lotId];
 
             timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
-            diff = this.getTimestamp() - this._remainderTime - timeout;
+            diff = this.getPresentTime() - this._remainderTime - timeout;
             cnt = Math.floor(diff / timeout);
 
             // отсчет добавления секунд ведеться от последнего обновления лотов
@@ -264,7 +264,7 @@ LotTimer.prototype = {
             var timeout, diff, cnt;
 
             timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
-            diff = this.getTimestamp() - this._remainderTime - timeout;
+            diff = this.getPresentTime() - this._remainderTime - timeout;
             cnt = Math.floor(diff / timeout);
 
             this._serverTime.setSeconds(this._serverTime.serverTime.getSeconds() + cnt + 1);
