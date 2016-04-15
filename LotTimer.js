@@ -247,6 +247,8 @@ LotTimer.prototype = {
         var start = this.getPresentTime(),
             timeout = 1000;
 
+        this.stopTimerUpdateLotsRemaindersTime();
+
         function updateTime () {
             var diff, cnt;
 
