@@ -239,7 +239,7 @@ LotTimer.prototype = {
             }
 
             if (this._remainderTime) {
-                this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)));
+                this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)), cnt);
 
                 if (this._isTimeOver()) {
                     this.syncServerTime();
@@ -260,9 +260,9 @@ LotTimer.prototype = {
         updateTime.call(this);
     },
 
-    updateRemainingTime: function (remainingTime) {
+    updateRemainingTime: function (remainingTime, cnt) {
         this._remainderTime = remainingTime;
-        this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots);
+        this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots, cnt);
     },
 
     stopTimerUpdateLotsRemaindersTime: function () {
@@ -310,7 +310,7 @@ LotTimer.prototype = {
      * @param remainingTime {Object} - остаточное время
      * @override
      */
-    signalRemainingTimeUpdate: function (remainingTime, dataLots) {
+    signalRemainingTimeUpdate: function (remainingTime, dataLots, cnt) {
 
     },
 
@@ -423,8 +423,8 @@ ServerClock.prototype = {
                 .text(getClockString(serverTime.getHours(), serverTime.getMinutes(), serverTime.getSeconds()));
         };
 
-        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots) {
-            var len, i = 0, lotRemainderTime, lot;
+        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots, cnt) {
+            var len, i = 0, lot, span, lotRemainderTime, textLotTime;
             var timeText = getClockString(
                 remainingTime.Hours,
                 remainingTime.Minutes,
@@ -441,22 +441,26 @@ ServerClock.prototype = {
                 for (; i < len; i++) {
 
                     lot = dataLots[i];
-                    //lotRemainderTime = lot.endTime;
+                    lotRemainderTime = this.addSecondsTo(lot.endTime, cnt);
 
-                    $el = $(options.remainingTimeLotSelector + lot.lotId);
+                    textLotTime = getClockString(
+                        lotRemainderTime.Hours,
+                        lotRemainderTime.Minutes,
+                        lotRemainderTime.Seconds
+                    );
 
                     if (this._isTimeOver()) {
                         // время вышло
-                        span = ['<span class="time-is-over">',
-                            timeText,
-                            '</span>'].join('');
+                        span = '<span class="time-is-over">';
                     } else {
-                        span = ['<span class="time-is-live">',
-                            timeText,
-                            '</span>'].join('');
+                        span = '<span class="time-is-live">';
                     }
 
-                    $el.html(span);
+                    span = [span,
+                        textLotTime,
+                        '</span>'].join('');
+
+                    $(options.remainingTimeLotSelector + lot.lotId).html(span);
                 }
             }
         }
