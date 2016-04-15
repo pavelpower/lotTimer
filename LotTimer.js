@@ -244,12 +244,13 @@ LotTimer.prototype = {
     },
 
     startTimerUpdateLotsRemaindersTime: function () {
+        var start = this.getPresentTime(),
+            timeout = 1000;
 
         function updateTime () {
-            var timeout, diff, cnt;
+            var diff, cnt;
 
             if (this._serverTime) {
-                timeout = this._intervalTimeOfUpdateLotsRemaindersTimers;
                 diff = this.getPresentTime() - this.__lastTimestampServerTimeLoad - timeout;
                 cnt = Math.floor(diff / timeout);
 
@@ -259,9 +260,12 @@ LotTimer.prototype = {
 
             this.updateLotsRemaindersTime();
 
+            diff = diff - timeout * cnt;
+            start = this.getPresentTime() - diff;
+
             this.__timerOfUpdateLotsRemainderTime = setTimeout(
                 updateTime.bind(this),
-                this._intervalTimeOfUpdateLotsRemaindersTimers
+                (timeout - diff)
             );
         }
 
