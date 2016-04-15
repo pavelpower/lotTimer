@@ -260,6 +260,12 @@ LotTimer.prototype = {
                 this.signalServerTimeUpdated(this._serverTime);
             }
 
+            this.updateRemainingTime(this.addSecondsTo(this._remainingTime, 0 - (cnt + 1)));
+
+            if (this._isTimeOver()) {
+                this.syncServerTime();
+            }
+
             this.updateLotsRemaindersTime();
 
             diff = diff - timeout * cnt;
@@ -272,6 +278,11 @@ LotTimer.prototype = {
         }
 
         updateTime.call(this);
+    },
+
+    updateRemainingTime: function (remainingTime) {
+        this._remainingTime = remainingTime;
+        this.signalRemainingTimeUpdate(this._remainingTime);
     },
 
     stopTimerUpdateLotsRemaindersTime: function () {
@@ -306,11 +317,21 @@ LotTimer.prototype = {
 
     /**
      * Сигнал о завершении оновления серверного времени
+     * @param serverTime {Date} Серверное время
      * @override
      */
-    signalServerTimeUpdated: function () {
+    signalServerTimeUpdated: function (serverTime) {
         //this.showServerTime();
         //this.showRemainingTime();
+    },
+
+    /**
+     * Сигнал обновления остаточного времени
+     * @param remainingTime {Object} - остаточное время
+     * @override
+     */
+    signalRemainingTimeUpdate: function (remainingTime) {
+
     },
 
     /**
