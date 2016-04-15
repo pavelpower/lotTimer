@@ -456,7 +456,7 @@ ServerClock.prototype = {
         };
 
         this.lotTimer.signalRemainingTimeUpdate = function (remainingTime) {
-            $(options.remainingTimeLotSelector)
+            $(options.remainingTimeSelector)
                 .text(getClockString(
                     remainingTime.Hours,
                     remainingTime.Minutes,
