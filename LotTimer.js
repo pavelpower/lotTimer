@@ -260,10 +260,12 @@ LotTimer.prototype = {
                 this.signalServerTimeUpdated(this._serverTime);
             }
 
-            this.updateRemainingTime(this.addSecondsTo(this._remainingTime, 0 - (cnt + 1)));
+            if (this._remainingTime) {
+                this.updateRemainingTime(this.addSecondsTo(this._remainingTime, 0 - (cnt + 1)));
 
-            if (this._isTimeOver()) {
-                this.syncServerTime();
+                if (this._isTimeOver()) {
+                    this.syncServerTime();
+                }
             }
 
             this.updateLotsRemaindersTime();
@@ -471,10 +473,18 @@ ServerClock.prototype = {
         };
 
         this.lotTimer.signalServerTimeUpdated = function (serverTime) {
-            console.log("this.lotTimer.signalServerTimeUpdated", serverTime);
             $(options.serverTimeSelector)
                 .text(getClockString(serverTime.getHours(), serverTime.getMinutes(), serverTime.getSeconds()));
         };
+
+        this.lotTime.signalRemainingTimeUpdate = function (remainingTime) {
+            $(options.remainingTimeLotSelector)
+                .text(getClockString(
+                    remainingTime.Hours,
+                    remainingTime.Minutes,
+                    remainingTime.Seconds
+                ));
+        }
     },
 
     getServerTime: function () {
