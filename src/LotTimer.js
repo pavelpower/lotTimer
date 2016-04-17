@@ -36,6 +36,11 @@ LotTimer.prototype = {
     _serverTime: null,
 
     /**
+     * Хранилище ссылок на закрытые лоты
+     */
+    _disableLots: {},
+
+    /**
      * Остаток времени
      * Обновляеться с сервера переодически - корректируеться
      * А так же обновляется при выислении по таймеру
@@ -113,11 +118,11 @@ LotTimer.prototype = {
 
         // вычисляеться время потраченное на отправление и полуение запроса от сервера
         // делиться на два - это интересно почему, видимо из практики вычитано
-        timeSpentOnRequest = Math.floor((this.getPresentTime() - startSyncTime) / 2);
+        timeSpentOnRequest = Math.floor(this.getPresentTime() - startSyncTime);
 
         this.__lastTimestampServerTimeLoad = this.getPresentTime();
 
-        // Вычисляеться количество прошедщих секунд по вычелсенному времени потраченному на запрос
+        // Вычисляеться количество прошедших секунд по вычелсенному времени потраченному на запрос
         // и добавляеться к серверному времени
         this._remainderTime = this.addSecondsTo(response.endTimeSpan, Math.round(timeSpentOnRequest / 1000));
 
@@ -160,15 +165,16 @@ LotTimer.prototype = {
      * Получение данных лотов
      */
     getLotsData: function () {
+        var startSyncTimeLots = this.getPresentTime();
+
         $.get(this._getURLWithCMD(this._syncLotsUrl), function (response) {
+            var cntLots =  Math.round(Math.floor(this.getPresentTime() - startSyncTimeLots) / 1000);
 
             if (response && response.lotsEndTime) {
-                this.__lastTimestampLoadDataLots = this.getPresentTime();
                 this.resolveLotsTime(response.lotsEndTime);
             }
 
-            this.stopTimerUpdateLotsRemaindersTime();
-            this.startTimerUpdateLotsRemaindersTime();
+            this.startTimerUpdateLotsRemaindersTime(cntLots);
 
         }.bind(this));
     },
@@ -176,8 +182,9 @@ LotTimer.prototype = {
     /**
      * Обновление данных времени лотов
      * @param data
+     * @param cnt - разница в секундах на запрос за данными к лотам
      */
-    resolveLotsTime: function (data) {
+    resolveLotsTime: function (data, cnt) {
       /*
       [{
        endTime:{Days: 0, Hours: 9, Minutes: 13, Seconds: 3},
@@ -201,7 +208,8 @@ LotTimer.prototype = {
           $htmlRow = {
               firstColumn: '',
               timeColumn: ''
-          };
+          },
+            timeIsOver = false;
 
         if (data == null) {
             return;
@@ -211,37 +219,27 @@ LotTimer.prototype = {
         i = data.length - 1;
         // Для ускорения цикла используем за ход сразу 10 обновлений
         while (i > -1) {
-            if (lot = data[i]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 1]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 2]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 3]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 4]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 5]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 6]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 7]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 8]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 9]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 10]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 11]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 12]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 13]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 14]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 15]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 16]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 17]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 18]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 19]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 20]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 21]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 22]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 23]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 24]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 25]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 26]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 27]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 28]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 29]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            if (lot = data[i - 30]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+
+            if (lot = data[i]) {
+                this.addSecondsTo(lot.endTime, sec);
+
+                timeIsOver = this._isTimeOver(lot.endTime);
+
+                if (timeIsOver) {
+
+                    if (!this._disableLots.hasOwnProperty(lot.lotId)) {
+                        // вызов события об отключении строки
+                        setTimeout(function (lot) {
+                            this.signalDisableRow(lot);
+                        }.bind(this, lot), 0);
+
+                        this._disableLots[lot.lotId] = lot;
+                    }
+                }
+
+                $htmlRow = this.updateHtmlRow(lot, $htmlRow, timeIsOver);
+
+            } else break;
             i = i - 31;
         }
 
@@ -250,13 +248,13 @@ LotTimer.prototype = {
         this.signalLotsUpdated($htmlRow);
     },
 
-    updateHtmlRow: function (lot, $htmlRow) {
+    updateHtmlRow: function (lot, $htmlRow, timeIsOver) {
         $htmlRow.firstColumn = this.getHTMLRowFirstColumn(
                 lot.lotId,
-                !lot.isLotProlongated || this._isTimeOver(lot.endTime) ? 'active' : 'passive')
+                this._isTimeOver(lot.endTime) ? 'active' : 'passive')
             + $htmlRow.firstColumn;
 
-        $htmlRow.timeColumn = this.getHTMLRowTimeColumn(lot.endTime)
+        $htmlRow.timeColumn = (timeIsOver ? this.getHTMLRowEndTimeColumn() : this.getHTMLRowTimeColumn(lot.endTime))
             + $htmlRow.timeColumn;
 
         return $htmlRow;
@@ -277,11 +275,16 @@ LotTimer.prototype = {
             '</div>'].join('');
     },
 
+    getHTMLRowEndTimeColumn: function () {
+        return '<div class="d-v-td">00:00:00</div>';
+    },
+
     /**
     * Запуск таймера локального перерасчета серверного времени
     * А так же переасчета оставшегося времени
+    * @param cntLots {Number} разница в секундах потраченная на запрос за данными лотов
     */
-    startTimerUpdateLotsRemaindersTime: function () {
+    startTimerUpdateLotsRemaindersTime: function (cntLots) {
         var start = this.getPresentTime(),
             timeout = 1000;
 
@@ -311,7 +314,7 @@ LotTimer.prototype = {
                 (timeout - diff)
             );
 
-            this.updateLotsRemaindersTime(cnt);
+            this.updateLotsRemaindersTime(cnt + cntLots);
         }
 
         updateTime.call(this);
@@ -347,10 +350,22 @@ LotTimer.prototype = {
     },
 
     /**
+     * Сигнал сообщающий о том что нужно выключить строку
+     * для лота
+     */
+    signalDisableRow: function (lot) {},
+
+    /**
      * Сигнал о завершении торгов
      * @override
      */
     signalTimeIsOver: function () { },
+
+    /**
+     * Сигнал о завершении торгов для конкретного лота
+     * @override
+     */
+    signalTimeIsOverForLot: function () { },
 
     /**
      * Запрос к серверу для получения серверного времени обвалился или пришел неверный ответ
