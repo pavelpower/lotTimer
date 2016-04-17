@@ -14,7 +14,9 @@ function LotTimer(options) {
     this._syncLotsUrl = options.syncLotsUrl;
     this._durationMode = options.durationMode;
     this._intervalTimeOfSyncServerTime = options.syncInterval;
-    this._intervalTimeOfUpdateLotsRemaindersTimers = 1000;
+    this._lotStatusActiveText = options.lotStatusActiveText;
+    this._lotStatusStopText = options.lotStatusStopText;
+
 
 
     this.syncServerTime();
@@ -200,11 +202,11 @@ LotTimer.prototype = {
         var i, lot,
           data = this.dataOfLots,
           sec = 0 - (cnt + 1),
+          timeIsOver = false,
           $htmlRow = {
               firstColumn: '',
               timeColumn: ''
-          },
-            timeIsOver = false;
+          };
 
         if (data == null) {
             return;
@@ -219,20 +221,22 @@ LotTimer.prototype = {
 
                 timeIsOver = true;
 
-                if (!this._disableLots[lot.lotId]) {
+                if (!lot.isTimeOver) {
                     this.addSecondsTo(lot.endTime, sec);
 
-                    timeIsOver = this._isTimeOver(lot.endTime);
+                    timeIsOver = lot.isTimeOver = this._isTimeOver(lot.endTime);
 
                     if (timeIsOver) {
 
                         // вызов события об отключении строки
                         setTimeout(function (lot) {
-                            this.signalDisableRow(lot);
+                            this.signalTimeIsOverForLot(lot);
                         }.bind(this, lot), 0);
 
-                        this._disableLots[lot.lotId] = true;
+                        lot.isTimeOver = true;
                     }
+
+                    data[i] = lot;
                 }
 
                 $htmlRow = this.updateHtmlRow(lot, $htmlRow, timeIsOver);
@@ -249,7 +253,8 @@ LotTimer.prototype = {
     updateHtmlRow: function (lot, $htmlRow, timeIsOver) {
         $htmlRow.firstColumn = this.getHTMLRowFirstColumn(
                 lot.lotId,
-                !timeIsOver ? 'active' : 'passive')
+                !timeIsOver ? 'i-active' : 'i-pending',
+                !timeIsOver ? this._lotStatusActiveText : this._lotStatusStopText)
             + $htmlRow.firstColumn;
 
         $htmlRow.timeColumn = (timeIsOver ? this.getHTMLRowEndTimeColumn() : this.getHTMLRowTimeColumn(lot.endTime))
@@ -258,9 +263,9 @@ LotTimer.prototype = {
         return $htmlRow;
     },
 
-    getHTMLRowFirstColumn: function (lotId, text) {
-        return ['<div class="row-lot-', lotId, ' d-v-td">',
-            '<i id="lot-status-', lotId, '" class="icon s-mr_5 tooltip"></i>', text,'</div>'].join('');
+    getHTMLRowFirstColumn: function (lotId, cssClass, text) {
+        return ['<div title="' + text + '" class="row-lot-', lotId, ' d-v-td">',
+            '<i id="lot-status-', lotId, '" class="icon ' + cssClass + '"></i></div>'].join('');
     },
 
     getHTMLRowTimeColumn: function (remainingTime) {
@@ -293,14 +298,14 @@ LotTimer.prototype = {
             diff = this.getPresentTime() - start - timeout;
             cnt = Math.floor(diff / timeout);
 
-            if (this._serverTime) {
-                this._serverTime.setSeconds(this._serverTime.getSeconds() + cnt + 1);
-                this.signalServerTimeUpdated(this._serverTime);
-            }
-
             if (this._remainderTime) {
                 this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)));
-                this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots);
+                setTimeout(this.signalRemainingTimeUpdate.bind(this, this._remainderTime, this.dataOfLots), 0);
+            }
+
+            if (this._serverTime) {
+                this._serverTime.setSeconds(this._serverTime.getSeconds(), 0 - (cnt + 1));
+                setTimeout(this.signalServerTimeUpdated.bind(this, this._serverTime), 0);
             }
 
             diff = diff - timeout * cnt;
@@ -345,12 +350,6 @@ LotTimer.prototype = {
             && _remainingTime.Minutes <= 0
             && _remainingTime.Seconds <= 0;
     },
-
-    /**
-     * Сигнал сообщающий о том что нужно выключить строку
-     * для лота
-     */
-    signalDisableRow: function (lot) {},
 
     /**
      * Сигнал о завершении торгов
