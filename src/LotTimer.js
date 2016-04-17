@@ -219,7 +219,7 @@ LotTimer.prototype = {
 
                 timeIsOver = true;
 
-                if (!this._disableLots.hasOwnProperty(lot.lotId)) {
+                if (!this._disableLots[lot.lotId]) {
                     this.addSecondsTo(lot.endTime, sec);
 
                     timeIsOver = this._isTimeOver(lot.endTime);
@@ -231,7 +231,7 @@ LotTimer.prototype = {
                             this.signalDisableRow(lot);
                         }.bind(this, lot), 0);
 
-                        this._disableLots[lot.lotId] = lot;
+                        this._disableLots[lot.lotId] = true;
                     }
                 }
 
