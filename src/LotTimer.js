@@ -240,7 +240,7 @@ LotTimer.prototype = {
                 $htmlRow = this.updateHtmlRow(lot, $htmlRow, timeIsOver);
 
             } else break;
-            i = i - 31;
+            --i;
         }
 
         this.dataOfLots = data;
@@ -251,7 +251,7 @@ LotTimer.prototype = {
     updateHtmlRow: function (lot, $htmlRow, timeIsOver) {
         $htmlRow.firstColumn = this.getHTMLRowFirstColumn(
                 lot.lotId,
-                this._isTimeOver(lot.endTime) ? 'active' : 'passive')
+                !timeIsOver ? 'active' : 'passive')
             + $htmlRow.firstColumn;
 
         $htmlRow.timeColumn = (timeIsOver ? this.getHTMLRowEndTimeColumn() : this.getHTMLRowTimeColumn(lot.endTime))
