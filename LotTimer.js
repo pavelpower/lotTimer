@@ -78,9 +78,9 @@ LotTimer.prototype = {
      */
     startRecursiveSyncServerTime: function () {
         this.__timerServerTime = setTimeout(function () {
-                this.syncServerTime();
-                this.startRecursiveSyncServerTime();
-            }.bind(this),
+            this.syncServerTime();
+            this.startRecursiveSyncServerTime();
+        }.bind(this),
             this._intervalTimeOfSyncServerTime
         );
     },
@@ -227,7 +227,7 @@ LotTimer.prototype = {
 
         this.stopTimerUpdateLotsRemaindersTime();
 
-        function updateTime () {
+        function updateTime() {
             var diff, cnt;
 
             diff = this.getPresentTime() - start - timeout;
@@ -239,7 +239,7 @@ LotTimer.prototype = {
             }
 
             if (this._remainderTime) {
-                this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)), cnt);
+                this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)));
 
                 if (this._isTimeOver()) {
                     this.syncServerTime();
@@ -260,9 +260,9 @@ LotTimer.prototype = {
         updateTime.call(this);
     },
 
-    updateRemainingTime: function (remainingTime, cnt) {
+    updateRemainingTime: function (remainingTime) {
         this._remainderTime = remainingTime;
-        this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots, cnt);
+        this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots);
     },
 
     stopTimerUpdateLotsRemaindersTime: function () {
@@ -310,7 +310,7 @@ LotTimer.prototype = {
      * @param remainingTime {Object} - остаточное время
      * @override
      */
-    signalRemainingTimeUpdate: function (remainingTime, dataLots, cnt) {
+    signalRemainingTimeUpdate: function (remainingTime, dataLots) {
 
     },
 
@@ -391,10 +391,11 @@ function ServerClock(options) {
         syncLotsUrl: window.realLotEndTimeSyncUrl + '/' + window.auctionId,
         durationMode: window.durationMode ? window.durationMode : 'none',
         syncInterval: 60000,
-        processLotsSelector: "#lots-table tr[id]:not(.lot-disable)",
-        serverTimeSelector: "#server-clock",
-        remainingTimeSelector: "#auction-end-clock, .auction-end-clock ",
-        remainingTimeLotSelector: '#lot-end-clock-',
+        processLotsSelector: '#lots-table tr[id]:not(.lot-disable)',
+        serverTimeSelector: '#server-clock',
+        remainingTimeSelector: '#auction-end-clock, .auction-end-clock ',
+        //remainingTimeLotSelector: '#lot-end-clock-',
+        remainingTimeLotSelector: 'lot-end-clock-',
         lotStatusSelector: '#lot-status-',
         lotStatusActiveText: 'Аукцион по позиции продолжается',
         lotStatusStopText: 'Аукцион по позиции завершен'
@@ -409,7 +410,7 @@ ServerClock.prototype = {
     init: function () {
         var options = this.options;
 
-        if (this.options.mode == "org") {
+        if (this.options.mode == 'org') {
             $('#bootstrap_alert').appendAlert(this.options.message + '<span class="auction-end-clock"></span>)', 'warning');
         }
 
@@ -423,8 +424,8 @@ ServerClock.prototype = {
                 .text(getClockString(serverTime.getHours(), serverTime.getMinutes(), serverTime.getSeconds()));
         };
 
-        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots, cnt) {
-            var len, i = 0, lot, span, lotRemainderTime, textLotTime;
+        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots) {
+            var len, i = 0, lotRemainderTime, lot;
             var timeText = getClockString(
                 remainingTime.Hours,
                 remainingTime.Minutes,
@@ -441,26 +442,19 @@ ServerClock.prototype = {
                 for (; i < len; i++) {
 
                     lot = dataLots[i];
-                    lotRemainderTime = this.addSecondsTo(lot.endTime, cnt);
+                    //lotRemainderTime = lot.endTime;
 
-                    textLotTime = getClockString(
-                        lotRemainderTime.Hours,
-                        lotRemainderTime.Minutes,
-                        lotRemainderTime.Seconds
-                    );
+                    //$el = $(options.remainingTimeLotSelector + lot.lotId);
+                    $el = document.getElementById(options.remainingTimeLotSelector + lot.lotId);
 
                     if (this._isTimeOver()) {
                         // время вышло
-                        span = '<span class="time-is-over">';
+                        span = '<span class="time-is-over">'+lot.endTime +'</span>';
                     } else {
-                        span = '<span class="time-is-live">';
+                        span = '<span class="time-is-live">' + timeText + '</span>';
                     }
 
-                    span = [span,
-                        textLotTime,
-                        '</span>'].join('');
-
-                    $(options.remainingTimeLotSelector + lot.lotId).html(span);
+                    $el.innerHTML = span;
                 }
             }
         }
