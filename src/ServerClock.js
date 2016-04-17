@@ -27,7 +27,8 @@ function ServerClock(options) {
 ServerClock.prototype = {
 
     init: function () {
-        var options = this.options;
+        var options = this.options
+            serverClock = this;
 
         if (this.options.mode == 'org') {
             $('#bootstrap_alert').appendAlert(this.options.message + '<span class="auction-end-clock"></span>)', 'warning');
@@ -44,7 +45,34 @@ ServerClock.prototype = {
         };
 
         this.lotTimer.signalLotsUpdated = function (data) {
-          var lot; 
+          var i, lot,
+            htmlRowFirstColumn = '',
+            htmlColTime = '';
+
+          if (!data) {
+            return;
+          }
+
+          i = data.length;
+
+          while (i > -1) {
+
+            lot = data[i];
+
+            htmlRowFirstColumn = serverClock.getHTMLRowFirstColumn(
+                lot.lotId,
+                this._isTimeOver(lot.endTime) ? 'active' : 'passive')
+              + htmlRowFirstColumn;
+
+            htmlColTime = serverClock.getHTMLRowTimeColumn(lot.endTime)
+            + htmlColTime;
+
+            i = i - 1;
+          }
+
+          document.getElementById('time-column').innerHTML = htmlRowFirstColumn;
+          document.getElementById('time-column').innerHTML = htmlColTime;
+
         };
 
         this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots) {
@@ -57,33 +85,29 @@ ServerClock.prototype = {
 
             $(options.remainingTimeSelector)
                 .text(timeText);
-
-            if (dataLots) {
-
-                len = dataLots.length;
-
-                for (; i < len; i++) {
-
-                    lot = dataLots[i];
-
-                    $el = document.getElementById(options.remainingTimeLotSelector + lot.lotId);
-
-                    if ($el == null) {
-                       continue;
-                    }
-
-                    if (this._isTimeOver()) {
-                        // время вышло
-                        span = ['<span class="time-is-over">', lot.endTime, '</span>'].join('');
-                    } else {
-                        span = ['<span class="time-is-live">', timeText, '</span>'].join('');
-                    }
-
-                    $el.innerHTML = span;
-                }
-            }
         }
     },
+
+    getHTMLRowFirstColumn: function (lotId, text) {
+      return [
+        '<div class="row-lot-', lot.lotId,
+        ' d-v-td"><i id="lot-status-', lot.lotId,
+        '" class="icon s-mr_5 tooltip">',
+        '<div class="tolWrapp"><div class="tolbody">',
+        text,
+        '</div></div></i>'
+      ].join('');
+    },
+
+    getHTMLRowTimeColumn: function (remainingTime) {
+      return ['<div class="d-v-td">',
+        getClockString(
+          remainingTime.Hours,
+          remainingTime.Minutes,
+          remainingTime.Seconds
+        ),
+        '</div>'].join('');
+    }
 
     getServerTime: function () {
         this.lotTimer.syncServerTime();
