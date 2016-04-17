@@ -297,7 +297,7 @@ LotTimer.prototype = {
             cnt = Math.floor(diff / timeout);
 
             if (this._remainderTime) {
-                this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)));
+                setTimeout(this.updateRemainingTime.bind(this, this.addSecondsTo(this._remainderTime, 0 - (cnt + 1))), 0);
                 setTimeout(this.signalRemainingTimeUpdate.bind(this, this._remainderTime, this.dataOfLots), 0);
             }
 
@@ -311,13 +311,13 @@ LotTimer.prototype = {
 
             this.__timerOfUpdateLotsRemainderTime = setTimeout(
                 updateTime.bind(this),
-                (0 - diff + timeout * ( 1 - cnt))
+                (timeout - diff)
             );
 
             this.updateLotsRemaindersTime(cnt);
         }
 
-        this.__timerOfUpdateLotsRemainderTime = setTimeout(updateTime.bind(this), timeout);
+        updateTime.call(this);
     },
 
     updateRemainingTime: function (remainingTime) {
