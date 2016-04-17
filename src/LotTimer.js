@@ -226,14 +226,12 @@ LotTimer.prototype = {
 
                     if (timeIsOver) {
 
-                        if (!this._disableLots.hasOwnProperty(lot.lotId)) {
-                            // вызов события об отключении строки
-                            setTimeout(function (lot) {
-                                this.signalDisableRow(lot);
-                            }.bind(this, lot), 0);
+                        // вызов события об отключении строки
+                        setTimeout(function (lot) {
+                            this.signalDisableRow(lot);
+                        }.bind(this, lot), 0);
 
-                            this._disableLots[lot.lotId] = lot;
-                        }
+                        this._disableLots[lot.lotId] = lot;
                     }
                 }
 
