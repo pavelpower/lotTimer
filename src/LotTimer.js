@@ -165,16 +165,12 @@ LotTimer.prototype = {
      * Получение данных лотов
      */
     getLotsData: function () {
-        var startSyncTimeLots = this.getPresentTime();
-
         $.get(this._getURLWithCMD(this._syncLotsUrl), function (response) {
-            var cntLots =  Math.round(Math.floor(this.getPresentTime() - startSyncTimeLots) / 1000);
-
             if (response && response.lotsEndTime) {
                 this.resolveLotsTime(response.lotsEndTime);
             }
 
-            this.startTimerUpdateLotsRemaindersTime(cntLots);
+            this.startTimerUpdateLotsRemaindersTime();
 
         }.bind(this));
     },
@@ -182,9 +178,8 @@ LotTimer.prototype = {
     /**
      * Обновление данных времени лотов
      * @param data
-     * @param cnt - разница в секундах на запрос за данными к лотам
      */
-    resolveLotsTime: function (data, cnt) {
+    resolveLotsTime: function (data) {
       /*
       [{
        endTime:{Days: 0, Hours: 9, Minutes: 13, Seconds: 3},
@@ -221,19 +216,24 @@ LotTimer.prototype = {
         while (i > -1) {
 
             if (lot = data[i]) {
-                this.addSecondsTo(lot.endTime, sec);
 
-                timeIsOver = this._isTimeOver(lot.endTime);
+                timeIsOver = true;
 
-                if (timeIsOver) {
+                if (!this._disableLots.hasOwnProperty(lot.lotId)) {
+                    this.addSecondsTo(lot.endTime, sec);
 
-                    if (!this._disableLots.hasOwnProperty(lot.lotId)) {
-                        // вызов события об отключении строки
-                        setTimeout(function (lot) {
-                            this.signalDisableRow(lot);
-                        }.bind(this, lot), 0);
+                    timeIsOver = this._isTimeOver(lot.endTime);
 
-                        this._disableLots[lot.lotId] = lot;
+                    if (timeIsOver) {
+
+                        if (!this._disableLots.hasOwnProperty(lot.lotId)) {
+                            // вызов события об отключении строки
+                            setTimeout(function (lot) {
+                                this.signalDisableRow(lot);
+                            }.bind(this, lot), 0);
+
+                            this._disableLots[lot.lotId] = lot;
+                        }
                     }
                 }
 
@@ -282,9 +282,8 @@ LotTimer.prototype = {
     /**
     * Запуск таймера локального перерасчета серверного времени
     * А так же переасчета оставшегося времени
-    * @param cntLots {Number} разница в секундах потраченная на запрос за данными лотов
     */
-    startTimerUpdateLotsRemaindersTime: function (cntLots) {
+    startTimerUpdateLotsRemaindersTime: function () {
         var start = this.getPresentTime(),
             timeout = 1000;
 
@@ -314,7 +313,7 @@ LotTimer.prototype = {
                 (timeout - diff)
             );
 
-            this.updateLotsRemaindersTime(cnt + cntLots);
+            this.updateLotsRemaindersTime(cnt);
         }
 
         updateTime.call(this);
