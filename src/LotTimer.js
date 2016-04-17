@@ -285,8 +285,6 @@ LotTimer.prototype = {
                 }
             }
 
-            setTimeout(this.updateLotsRemaindersTime.bind(this, cnt), 0);
-
             diff = diff - timeout * cnt;
             start = this.getPresentTime() - diff;
 
@@ -294,6 +292,8 @@ LotTimer.prototype = {
                 updateTime.bind(this),
                 (timeout - diff)
             );
+
+            this.updateLotsRemaindersTime(cnt);
         }
 
         updateTime.call(this);
