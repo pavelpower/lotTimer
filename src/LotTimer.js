@@ -21,7 +21,6 @@ function LotTimer(options) {
 
     this.syncServerTime();
     this.startRecursiveSyncServerTime();
-    this.startTimerUpdateLotsRemaindersTime();
 }
 
 LotTimer.prototype = {
@@ -105,7 +104,7 @@ LotTimer.prototype = {
     syncServerTime: function () {
         var startSyncTime = this.getPresentTime();
 
-        $.get(this._getURLWithCMD(this._syncUrl))
+        $.get(this._getURLWithCMD(this._syncLotsUrl))
             .done(this._parseResponseServerTime.bind(this, startSyncTime))
             .fail(this.signalServerResponseFail.bind(this));
     },
