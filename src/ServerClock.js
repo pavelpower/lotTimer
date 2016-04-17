@@ -12,7 +12,7 @@ function ServerClock(options) {
         syncInterval: 60000,
         processLotsSelector: '#lots-table tr[id]:not(.lot-disable)',
         serverTimeSelector: '#server-clock',
-        remainingTimeSelector: '#auction-end-clock, .auction-end-clock ',
+        remainingTimeId: 'auction-end-clock',
         //remainingTimeLotSelector: '#lot-end-clock-',
         remainingTimeLotSelector: 'lot-end-clock-',
         lotStatusSelector: '#lot-status-',
@@ -45,7 +45,7 @@ ServerClock.prototype = {
         };
 
         this.lotTimer.signalLotsUpdated = function ($htmlRow) {
-          document.getElementById('time-column').innerHTML = $htmlRow.firstColumn;
+          document.getElementById('first-column').innerHTML = $htmlRow.firstColumn;
           document.getElementById('time-column').innerHTML = $htmlRow.timeColumn;
         };
 
@@ -56,8 +56,7 @@ ServerClock.prototype = {
                 remainingTime.Seconds
             );
 
-            $(options.remainingTimeSelector)
-                .text(timeText);
+            document.getElementById(options.remainingTimeId).innerText = timeText;
         }
     },
 

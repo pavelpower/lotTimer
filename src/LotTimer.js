@@ -232,7 +232,7 @@ LotTimer.prototype = {
     updateHtmlRow: function (lot, $htmlRow) {
         $htmlRow.firstColumn = this.getHTMLRowFirstColumn(
                 lot.lotId,
-                this._isTimeOver(lot.endTime) ? 'active' : 'passive')
+                !lot.isLotProlongated || this._isTimeOver(lot.endTime) ? 'active' : 'passive')
             + $htmlRow.firstColumn;
 
         $htmlRow.timeColumn = this.getHTMLRowTimeColumn(lot.endTime)
@@ -285,7 +285,7 @@ LotTimer.prototype = {
                 }
             }
 
-            this.updateLotsRemaindersTime(cnt);
+            setTimeout(this.updateLotsRemaindersTime(cnt).bind(this), 0);
 
             diff = diff - timeout * cnt;
             start = this.getPresentTime() - diff;
