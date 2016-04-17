@@ -104,7 +104,7 @@ LotTimer.prototype = {
     syncServerTime: function () {
         var startSyncTime = this.getPresentTime();
 
-        $.get( this._getURLWithCMD(this._durationMode === 'ProlongationByLots' ?this._syncLotsUrl : this.__syncUrl))
+        $.get( this._getURLWithCMD(this._durationMode === 'ProlongationByLots' ?this._syncLotsUrl : this._syncUrl))
             .done(this._parseResponseServerTime.bind(this, startSyncTime))
             .fail(this.signalServerResponseFail.bind(this));
     },
