@@ -27,8 +27,7 @@ function ServerClock(options) {
 ServerClock.prototype = {
 
     init: function () {
-        var options = this.options,
-            serverClock = this;
+        var options = this.options;
 
         if (this.options.mode == 'org') {
             $('#bootstrap_alert').appendAlert(this.options.message + '<span class="auction-end-clock"></span>)', 'warning');

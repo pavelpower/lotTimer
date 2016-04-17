@@ -221,7 +221,28 @@ LotTimer.prototype = {
             if (lot = data[i - 7]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
             if (lot = data[i - 8]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
             if (lot = data[i - 9]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
-            i = i - 10;
+            if (lot = data[i - 10]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 11]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 12]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 13]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 14]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 15]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 16]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 17]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 18]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 19]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 20]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 21]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 22]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 23]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 24]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 25]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 26]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 27]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 28]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 29]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 30]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            i = i - 31;
         }
 
         this.dataOfLots = data;
@@ -279,10 +300,7 @@ LotTimer.prototype = {
 
             if (this._remainderTime) {
                 this.updateRemainingTime(this.addSecondsTo(this._remainderTime, 0 - (cnt + 1)));
-
-                if (this._isTimeOver()) {
-                    this.syncServerTime();
-                }
+                this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots);
             }
 
             diff = diff - timeout * cnt;
@@ -301,7 +319,13 @@ LotTimer.prototype = {
 
     updateRemainingTime: function (remainingTime) {
         this._remainderTime = remainingTime;
-        this.signalRemainingTimeUpdate(this._remainderTime, this.dataOfLots);
+
+        if (this._isTimeOver()) {
+            this._remainderTime.Hours = 0;
+            this._remainderTime.Minutes = 0;
+            this._remainderTime.Seconds = 0;
+            this.syncServerTime();
+        }
     },
 
     stopTimerUpdateLotsRemaindersTime: function () {
