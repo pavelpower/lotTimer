@@ -190,24 +190,18 @@ LotTimer.prototype = {
     },
 
     /**
-     * Сохранить оставшееся время в хэш лотов
-     * Так же вызывает сигналы об обновлении лота
-     * @param lotId {Number|String} - идентификатор лота
-     * @param lotRemainderTime - остаток времени
-     */
-    setLot  ReminderTime: function (lotId, lotRemainderTime) {
-        this.dataOfLots[lotId] = lotRemainderTime;
-    },
-
-    /**
      * Обновление времени для всех лотов в хеше
      * путем вычисления времени прошедшего с момента последнего обноавления с сервера,
      * до текущего момента
      */
     updateLotsRemaindersTime: function (cnt) {
-        var i, lot, lotRemainderTime,
-          data = this.dataOfLots
-          sec = 0 - (cnt + 1);
+        var i, lot,
+          data = this.dataOfLots,
+          sec = 0 - (cnt + 1),
+          $htmlRow = {
+              firstColumn: '',
+              timeColumn: ''
+          };
 
         if (data == null) {
             return;
@@ -217,23 +211,49 @@ LotTimer.prototype = {
         i = data.length - 1;
         // Для ускорения цикла используем за ход сразу 10 обновлений
         while (i > -1) {
-          if (lot = data[i]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 1]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 2]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 3]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 4]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 5]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 6]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 7]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 8]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 9]) this.addSecondsTo(lot.endTime, sec) else break;
-          if (lot = data[i - 10]) this.addSecondsTo(lot.endTime, sec) else break;
-          i = i - 10;
+            if (lot = data[i]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 1]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 2]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 3]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 4]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 5]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 6]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 7]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 8]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            if (lot = data[i - 9]) {this.addSecondsTo(lot.endTime, sec); $htmlRow = this.updateHtmlRow(lot, $htmlRow);} else break;
+            i = i - 10;
         }
 
         this.dataOfLots = data;
 
-        this.signalLotsUpdated(data);
+        this.signalLotsUpdated($htmlRow);
+    },
+
+    updateHtmlRow: function (lot, $htmlRow) {
+        $htmlRow.firstColumn = this.getHTMLRowFirstColumn(
+                lot.lotId,
+                this._isTimeOver(lot.endTime) ? 'active' : 'passive')
+            + $htmlRow.firstColumn;
+
+        $htmlRow.timeColumn = this.getHTMLRowTimeColumn(lot.endTime)
+            + $htmlRow.timeColumn;
+
+        return $htmlRow;
+    },
+
+    getHTMLRowFirstColumn: function (lotId, text) {
+        return ['<div class="row-lot-', lotId, ' d-v-td">',
+            '<i id="lot-status-', lotId, '" class="icon s-mr_5 tooltip"></i>', text,'</div>'].join('');
+    },
+
+    getHTMLRowTimeColumn: function (remainingTime) {
+        return ['<div class="d-v-td">',
+            getClockString(
+                remainingTime.Hours,
+                remainingTime.Minutes,
+                remainingTime.Seconds
+            ),
+            '</div>'].join('');
     },
 
     /**
@@ -336,29 +356,6 @@ LotTimer.prototype = {
      * @param hashLotsTime
      */
     signalLotsUpdated: function (hashLotsTime) {},
-
-    /**
-     * Изменение оставшегося времени отсносительно времени отсчета (старта)
-     * (Вычитание)
-     * @param timeFrom {timestamp} - от какого времени вести отчет
-     * @param remainderTime {timestamp} - время к которому нужно прибавить количествопройденных секунд
-     * @return {timestamp} - время сколько осталось
-     */
-    getRemainderTime: function (timeFrom, remainderTime) {
-        var start, diffTime, diffSec;
-
-        start = timeFrom;
-
-        // сколько прошло времени с последнего запроса лотов
-        diffTime = (this.getPresentTime() - start);
-
-        // количество секунд с прошедших за это время
-        diffSec = Math.floor(diffTime / 1000);
-
-        // расчет прошедших секунд со времени старта
-        // вычитаем из времени старта, для получения времени оставшегося
-        return this.addSecondsTo(remainderTime, 0 - (diffSec + 1));
-    },
 
     /**
      * Получить текущее время

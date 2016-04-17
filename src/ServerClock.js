@@ -27,7 +27,7 @@ function ServerClock(options) {
 ServerClock.prototype = {
 
     init: function () {
-        var options = this.options
+        var options = this.options,
             serverClock = this;
 
         if (this.options.mode == 'org') {
@@ -44,39 +44,12 @@ ServerClock.prototype = {
                 .text(getClockString(serverTime.getHours(), serverTime.getMinutes(), serverTime.getSeconds()));
         };
 
-        this.lotTimer.signalLotsUpdated = function (data) {
-          var i, lot,
-            htmlRowFirstColumn = '',
-            htmlColTime = '';
-
-          if (!data) {
-            return;
-          }
-
-          i = data.length;
-
-          while (i > -1) {
-
-            lot = data[i];
-
-            htmlRowFirstColumn = serverClock.getHTMLRowFirstColumn(
-                lot.lotId,
-                this._isTimeOver(lot.endTime) ? 'active' : 'passive')
-              + htmlRowFirstColumn;
-
-            htmlColTime = serverClock.getHTMLRowTimeColumn(lot.endTime)
-            + htmlColTime;
-
-            i = i - 1;
-          }
-
-          document.getElementById('time-column').innerHTML = htmlRowFirstColumn;
-          document.getElementById('time-column').innerHTML = htmlColTime;
-
+        this.lotTimer.signalLotsUpdated = function ($htmlRow) {
+          document.getElementById('time-column').innerHTML = $htmlRow.firstColumn;
+          document.getElementById('time-column').innerHTML = $htmlRow.timeColumn;
         };
 
-        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime, dataLots) {
-            var len, i = 0, lotRemainderTime, lot;
+        this.lotTimer.signalRemainingTimeUpdate = function (remainingTime) {
             var timeText = getClockString(
                 remainingTime.Hours,
                 remainingTime.Minutes,
@@ -87,27 +60,6 @@ ServerClock.prototype = {
                 .text(timeText);
         }
     },
-
-    getHTMLRowFirstColumn: function (lotId, text) {
-      return [
-        '<div class="row-lot-', lot.lotId,
-        ' d-v-td"><i id="lot-status-', lot.lotId,
-        '" class="icon s-mr_5 tooltip">',
-        '<div class="tolWrapp"><div class="tolbody">',
-        text,
-        '</div></div></i>'
-      ].join('');
-    },
-
-    getHTMLRowTimeColumn: function (remainingTime) {
-      return ['<div class="d-v-td">',
-        getClockString(
-          remainingTime.Hours,
-          remainingTime.Minutes,
-          remainingTime.Seconds
-        ),
-        '</div>'].join('');
-    }
 
     getServerTime: function () {
         this.lotTimer.syncServerTime();
