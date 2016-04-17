@@ -135,8 +135,9 @@ LotTimer.prototype = {
 
         if (response.lotsEndTime) {
             this.resolveLotsTime(response.lotsEndTime);
-            this.startTimerUpdateLotsRemaindersTime();
         }
+
+        this.startTimerUpdateLotsRemaindersTime();
     },
 
     /**
