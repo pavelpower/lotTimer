@@ -122,19 +122,21 @@ LotTimer.prototype = {
         // делиться на два - это интересно почему, видимо из практики вычитано
         timeSpentOnRequest = Math.floor(this.getPresentTime() - startSyncTime);
 
-        this.__lastTimestampServerTimeLoad = this.getPresentTime();
-
         // Вычисляеться количество прошедших секунд по вычелсенному времени потраченному на запрос
         // и добавляеться к серверному времени
         this._remainderTime = this.addSecondsTo(response.endTimeSpan, Math.round(timeSpentOnRequest / 1000));
 
         if (this._isTimeOver()) {
-            this.signalTimeIsOver();
+            this.stopRecursiveSyncServerTime();
+            setTimeout(this.signalTimeIsOver.bind(this), 0);
             return;
         }
 
         this.setServerTime(response.dateTime, timeSpentOnRequest);
 
+        if (this._durationMode === 'ProlongationByLots') {
+            this.getLotsData();
+        }
     },
 
     /**
@@ -155,11 +157,7 @@ LotTimer.prototype = {
                 dataTime.Millisecond + timeSpentOnRequest
             );
 
-            this.signalServerTimeUpdated(this._serverTime);
-        }
-
-        if (this._durationMode === 'ProlongationByLots') {
-            this.getLotsData();
+            setTimeout(this.signalServerTimeUpdated.bind(this, this._serverTime), 0);
         }
     },
 
@@ -313,13 +311,13 @@ LotTimer.prototype = {
 
             this.__timerOfUpdateLotsRemainderTime = setTimeout(
                 updateTime.bind(this),
-                (timeout - diff)
+                (0 - diff + timeout * ( 1 - cnt))
             );
 
             this.updateLotsRemaindersTime(cnt);
         }
 
-        updateTime.call(this);
+        this.__timerOfUpdateLotsRemainderTime = setTimeout(updateTime.bind(this), timeout);
     },
 
     updateRemainingTime: function (remainingTime) {
