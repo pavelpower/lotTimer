@@ -134,8 +134,9 @@ LotTimer.prototype = {
 
         this.setServerTime(response.dateTime, timeSpentOnRequest);
 
-        if (this._durationMode === 'ProlongationByLots') {
-            this.getLotsData();
+        if (this._durationMode === 'ProlongationByLots' && response.lotsEndTime) {
+            this.resolveLotsTime(response.lotsEndTime);
+            this.startTimerUpdateLotsRemaindersTime();
         }
     },
 
@@ -159,20 +160,6 @@ LotTimer.prototype = {
 
             setTimeout(this.signalServerTimeUpdated.bind(this, this._serverTime), 0);
         }
-    },
-
-    /**
-     * Получение данных лотов
-     */
-    getLotsData: function () {
-        $.get(this._getURLWithCMD(this._syncLotsUrl), function (response) {
-            if (response && response.lotsEndTime) {
-                this.resolveLotsTime(response.lotsEndTime);
-            }
-
-            this.startTimerUpdateLotsRemaindersTime();
-
-        }.bind(this));
     },
 
     /**
